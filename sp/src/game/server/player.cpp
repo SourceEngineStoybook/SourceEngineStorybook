@@ -70,7 +70,7 @@
 #include "vote_controller.h"
 #include "ai_speech.h"
 
-#include "point_keypad.h"
+#include "Storybook/point_keypad.h"
 
 #if defined USES_ECON_ITEMS
 #include "econ_wearable.h"
