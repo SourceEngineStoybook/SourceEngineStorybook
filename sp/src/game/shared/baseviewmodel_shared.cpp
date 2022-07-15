@@ -424,6 +424,21 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 		g_ClientVirtualReality.OverrideViewModelTransform( vmorigin, vmangles, pWeapon && pWeapon->ShouldUseLargeViewModelVROverride() );
 	}
 
+#ifdef CSS_WEAPONS_IN_HL2 // This code originates from Mapbase v7.0. In the event of a merge conflict, it should take precedence over this code.
+	// Flip the view if we should be flipping
+	if (ShouldFlipViewModel())
+	{
+		Vector vecOriginDiff = (eyePosition - vmorigin);
+		QAngle angAnglesDiff = (eyeAngles - vmangles);
+
+		vmorigin.x = (eyePosition.x + vecOriginDiff.x);
+		vmorigin.y = (eyePosition.y + vecOriginDiff.y);
+		
+		vmangles.y = (eyeAngles.y + angAnglesDiff.y);
+		vmangles.z = (eyeAngles.z + angAnglesDiff.z);
+	}
+#endif
+
 	SetLocalOrigin( vmorigin );
 	SetLocalAngles( vmangles );
 

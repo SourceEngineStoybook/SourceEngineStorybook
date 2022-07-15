@@ -56,6 +56,12 @@ static DynamicResupplyItems_t g_DynamicResupplyAmmoItems[] =
 	{ "item_ammo_357",				"357",			SIZE_AMMO_357,			0.0f },
 	{ "item_ammo_crossbow",			"XBowBolt",		SIZE_AMMO_CROSSBOW,		0.0f },
 	{ "item_ammo_ar2_altfire",		"AR2AltFire",	SIZE_AMMO_AR2_ALTFIRE,	0.0f },
+#ifdef CSS_WEAPONS_IN_HL2
+	{ "item_css_ammo_45acp",		"45ACP",		SIZE_AMMO_45ACP,		0.0f },
+	{ "item_css_ammo_357sig",		"357SIG",		SIZE_AMMO_357SIG,		0.0f },
+	{ "item_css_ammo_556mm",		"556mm",		SIZE_AMMO_556mm,		0.0f },
+	{ "item_css_ammo_762mm",		"762mm",		SIZE_AMMO_762mm,		0.0f },
+#endif
 };
 
 #define DS_HEALTH_INDEX		0
@@ -124,6 +130,11 @@ private:
 
 LINK_ENTITY_TO_CLASS(item_dynamic_resupply, CItem_DynamicResupply);
 
+#ifdef CSS_WEAPONS_IN_HL2
+// Allows the new values to be in a distinct FGD entry
+LINK_ENTITY_TO_CLASS( item_css_dynamic_resupply, CItem_DynamicResupply );
+#endif
+
 // Master
 typedef CHandle<CItem_DynamicResupply> DynamicResupplyHandle_t;
 
@@ -153,6 +164,12 @@ BEGIN_DATADESC( CItem_DynamicResupply )
 	DEFINE_KEYFIELD( m_flDesiredAmmo[7], FIELD_FLOAT, "DesiredAmmo357" ),
 	DEFINE_KEYFIELD( m_flDesiredAmmo[8], FIELD_FLOAT, "DesiredAmmoCrossbow" ),
 	DEFINE_KEYFIELD( m_flDesiredAmmo[9], FIELD_FLOAT, "DesiredAmmoAR2_AltFire" ),
+#ifdef CSS_WEAPONS_IN_HL2
+	DEFINE_KEYFIELD( m_flDesiredAmmo[10], FIELD_FLOAT, "DesiredAmmo45ACP" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[11], FIELD_FLOAT, "DesiredAmmo357SIG" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[12], FIELD_FLOAT, "DesiredAmmo556mm" ),
+	DEFINE_KEYFIELD( m_flDesiredAmmo[13], FIELD_FLOAT, "DesiredAmmo762mm" ),
+#endif
 
 	DEFINE_FIELD( m_version, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bIsMaster, FIELD_BOOLEAN ),
@@ -189,6 +206,12 @@ CItem_DynamicResupply::CItem_DynamicResupply( void )
 	m_flDesiredAmmo[7] = 0;		// 357
 	m_flDesiredAmmo[8] = 0;		// Crossbow
 	m_flDesiredAmmo[9] = 0;		// AR2 alt-fire
+#ifdef CSS_WEAPONS_IN_HL2
+	m_flDesiredAmmo[10] = 0;	// .45 ACP
+	m_flDesiredAmmo[11] = 0;	// .357 SIG
+	m_flDesiredAmmo[12] = 0;	// 5.56mm
+	m_flDesiredAmmo[13] = 0;	// 7.62mm
+#endif
 }
 
 
@@ -202,6 +225,11 @@ void CItem_DynamicResupply::Spawn( void )
 		UTIL_Remove( this );
 		return;
 	}
+
+#ifdef CSS_WEAPONS_IN_HL2
+	if (FStrEq( GetClassname(), "item_css_dynamic_resupply" ))
+		SetClassname( "item_dynamic_resupply" );
+#endif
 
 	// Don't callback to spawn
 	Precache();
