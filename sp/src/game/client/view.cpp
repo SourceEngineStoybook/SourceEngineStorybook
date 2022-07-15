@@ -763,13 +763,8 @@ void CViewRender::SetUpViews()
 	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-<<<<<<< HEAD
 #ifdef MAPBASE
 	view.fovViewmodel = fabs(g_pClientMode->GetViewModelFOV()) - flFOVOffset;
-=======
-#ifdef CSS_WEAPONS_IN_HL2 // This code originates from Mapbase v7.0. In the event of a merge conflict, it should take precedence over this code.
-	view.fovViewmodel = max(0.001f, view.fovViewmodel - flFOVOffset);
->>>>>>> 0fca4969d248a6d261dce6c72c89070568cd5a30
 #else
 	view.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
 #endif
