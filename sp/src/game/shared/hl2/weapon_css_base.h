@@ -20,7 +20,7 @@
 // Makes all CS:S weapons precache on map load, just like HL2's weapons.
 // This means CS:S weapons are always precached even when not in use by the current level.
 // This is left off by default to save resources.
-#define PRECACHE_REGISTER_CSS_WEAPONS 0
+#define PRECACHE_REGISTER_CSS_WEAPONS 1
 
 // TODO: Enables code linking classes to the original CS:S classnames
 #define ALLOW_ORIGINAL_CSS_CLASSNAMES 1

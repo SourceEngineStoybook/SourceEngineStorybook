@@ -12,6 +12,7 @@
 #include "gamerules.h"
 #include "gamestats.h"
 #include "ammodef.h"
+
 #ifdef CLIENT_DLL
 #else
 #include "basecombatcharacter.h"
@@ -721,6 +722,25 @@ void CBase_CSS_HL2_SniperRifle::ToggleZoom( void )
 			break;
 	}
 
+#ifndef CLIENT_DLL
+	if (m_nZoomLevel > 0)
+	{
+		// Show the scope
+		CSingleUserRecipientFilter filter(pPlayer);
+		UserMessageBegin(filter, "ShowScope");
+		WRITE_BYTE(1);
+		MessageEnd();
+	}
+	else
+	{
+		// Send a message to hide the scope
+		CSingleUserRecipientFilter filter(pPlayer);
+		UserMessageBegin(filter, "ShowScope");
+		WRITE_BYTE(0);
+		MessageEnd();
+	}
+#endif
+
 	WeaponSound( SPECIAL3 );
 
 	if (m_nZoomLevel > 0)
@@ -742,7 +762,13 @@ void CBase_CSS_HL2_SniperRifle::StopZoom( void )
 	
 	if ( pPlayer == NULL )
 		return;
-
+#ifndef CLIENT_DLL
+	// Send a message to hide the scope
+	CSingleUserRecipientFilter filter(pPlayer);
+	UserMessageBegin(filter, "ShowScope");
+	WRITE_BYTE(0);
+	MessageEnd();
+#endif
 	// Unzoom
 	if ( pPlayer->SetFOV( this, 0, GetUnZoomRate() ) )
 		m_nZoomLevel = 0;
