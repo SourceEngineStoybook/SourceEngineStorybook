@@ -311,6 +311,11 @@ $Project "Server (Episodic)"
 				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
 				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
 			}
+
+			$Folder "DOD:S Weapons"
+			{
+				$File	"$SRCDIR\game\shared\hl2\weapon_dods_pistols.cpp"
+			}
 		}
 	}
 }
