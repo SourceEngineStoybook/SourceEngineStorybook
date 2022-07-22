@@ -102,6 +102,8 @@ extern ConVar r_depthoverlay;
 extern ConVar mat_viewportscale;
 extern ConVar mat_viewportupscale;
 extern bool g_bDumpRenderTargets;
+ConVar weapon_css_scope_hideviewmodel("weapon_css_scope_hideviewmodel", "0",FCVAR_HIDDEN);
+
 
 //-----------------------------------------------------------------------------
 // Convars related to controlling rendering
@@ -981,7 +983,6 @@ inline bool CViewRender::ShouldDrawEntities( void )
 	return ( !m_pDrawEntities || (m_pDrawEntities->GetInt() != 0) );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Check all conditions which would prevent drawing the view model
 // Input  : drawViewmodel - 
@@ -990,6 +991,7 @@ inline bool CViewRender::ShouldDrawEntities( void )
 //-----------------------------------------------------------------------------
 bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 {
+	
 	if ( !bDrawViewmodel )
 		return false;
 
@@ -1005,6 +1007,8 @@ bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 	if ( render->GetViewEntity() > gpGlobals->maxClients )
 		return false;
 
+	if (weapon_css_scope_hideviewmodel.GetBool())
+		return false;
 	return true;
 }
 

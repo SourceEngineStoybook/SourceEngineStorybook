@@ -73,7 +73,12 @@ public:
 	// Each game can override this to get whatever values it wants from the script.
 	virtual void Parse( KeyValues *pKeyValuesData, const char *szWeaponName );
 
-	
+	//WEAPON_IRONSIGHT
+	Vector					vecIronsightPosOffset;
+	QAngle					angIronsightAngOffset;
+	float					flIronsightFOVOffset;
+	//WEAPON_IRONSIGHT
+
 public:	
 	bool					bParsedScript;
 	bool					bLoadedHudElements;

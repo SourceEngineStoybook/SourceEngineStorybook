@@ -45,6 +45,8 @@ extern ConVar sk_npc_dmg_crossbow;
 ConVar weapon_crossbow_new_hit_locations( "weapon_crossbow_new_hit_locations", "1", FCVAR_NONE, "Toggles new crossbow knockback that properly pushes back the correct limbs." );
 #endif
 
+ConVar hl2_crossbow_scope("hl2_crossbow_scope", "0", 0, "Enables scope on HL2 crossbow.");
+
 void TE_StickyBolt( IRecipientFilter& filter, float delay,	Vector vecDirection, const Vector *origin );
 
 #define	BOLT_SKIN_NORMAL	0
@@ -877,7 +879,7 @@ void CWeaponCrossbow::CheckZoomToggle( void )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 	
-	if ( pPlayer->m_afButtonPressed & IN_ATTACK2 )
+	if ( pPlayer->m_afButtonPressed & IN_ATTACK2 || pPlayer->m_afButtonPressed & IN_IRONSIGHT)
 	{
 			ToggleZoom();
 	}
@@ -1083,6 +1085,48 @@ bool CWeaponCrossbow::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+
+void CWeaponCrossbow::ToggleZoom(void)
+{
+	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+
+	if (pPlayer == NULL)
+		return;
+
+#ifndef CLIENT_DLL
+	if (m_bInZoom)
+	{
+		if (pPlayer->SetFOV(this, 0, 0.2f))
+		{
+			m_bInZoom = false;
+
+			// Send a message to hide the scope
+			CSingleUserRecipientFilter filter(pPlayer);
+			UserMessageBegin(filter, "ShowScope");
+			WRITE_BYTE(0);
+			MessageEnd();
+		}
+	}
+	else
+	{
+		if (pPlayer->SetFOV(this, 20, 0.1f))
+		{
+			m_bInZoom = true;
+
+			if (hl2_crossbow_scope.GetBool())
+			{
+				// Send a message to show the scope
+				CSingleUserRecipientFilter filter(pPlayer);
+				UserMessageBegin(filter, "ShowScope");
+				WRITE_BYTE(1);
+				MessageEnd();
+			}
+		}
+	}
+#endif
+}
+
+/* OLD CODE STILL HERE
 void CWeaponCrossbow::ToggleZoom( void )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
@@ -1105,6 +1149,7 @@ void CWeaponCrossbow::ToggleZoom( void )
 		}
 	}
 }
+*/
 
 #define	BOLT_TIP_ATTACHMENT	2
 

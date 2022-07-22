@@ -200,6 +200,19 @@ public:
 	DECLARE_ENT_SCRIPTDESC();
 #endif
 
+	//WEAPON_IRONSIGHT
+	Vector					GetIronsightPositionOffset(void) const;
+	QAngle					GetIronsightAngleOffset(void) const;
+	float					GetIronsightFOVOffset(void) const;
+	void					HoldingIronsightKey(void);
+	virtual bool			HasIronsights(void) { return GetWpnData().vecIronsightPosOffset == vec3_origin ? false : true; } //default yes; override and return false for weapons with no ironsights (like weapon_crowbar)
+	bool					IsIronsighted(void);
+	void					ToggleIronsights(void);
+	void					EnableIronsights(void);
+	void					DisableIronsights(bool bIsComingBack = 0);
+	void					SetIronsightTime(void);
+	//WEAPON_IRONSIGHT
+
 							CBaseCombatWeapon();
 	virtual 				~CBaseCombatWeapon();
 
@@ -598,7 +611,7 @@ public:
 	// for first person and third person.
 	bool					GetShootPosition( Vector &vOrigin, QAngle &vAngles );
 	virtual void			DrawCrosshair( void );
-	virtual bool			ShouldDrawCrosshair( void ) { return true; }
+	virtual bool			ShouldDrawCrosshair( void ) { return m_bIronSightShouldNotHideCrosshair ? true : !m_bIsIronsighted; } //LYCHY
 	
 	// Weapon state checking
 	virtual bool			IsCarriedByLocalPlayer( void );
@@ -687,6 +700,15 @@ public:
 #ifdef MAPBASE
 	CNetworkVar( int, m_iDroppedModelIndex );
 #endif
+
+	//WEAPON_IRONSIGHT
+	CNetworkVar(bool, m_bIsIronsighted);
+	bool m_bisIronSightComingBack;
+	bool m_bIronSightShouldNotHideCrosshair;
+	CNetworkVar(float, m_flIronsightedTime);
+
+	//WEAPON_IRONSIGHT
+
 	// Sounds
 	float					m_flNextEmptySoundTime;				// delay on empty sound playing
 

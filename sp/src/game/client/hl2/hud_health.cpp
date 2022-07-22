@@ -35,6 +35,7 @@ using namespace vgui;
 #include "tier0/memdbgon.h"
 
 #define INIT_HEALTH -1
+ConVar weapon_ironsight_shouldnothideelements("weapon_ironsight_shouldnothideelements", "0");
 
 //-----------------------------------------------------------------------------
 // Purpose: Health panel
@@ -113,11 +114,13 @@ void CHudHealth::VidInit()
 void CHudHealth::OnThink()
 {
 	int newHealth = 0;
-	C_BasePlayer *local = C_BasePlayer::GetLocalPlayer();
+	C_BasePlayer* local = C_BasePlayer::GetLocalPlayer();
 	if ( local )
 	{
 		// Never below zero
 		newHealth = MAX( local->GetHealth(), 0 );
+		//if(weapon_ironsight_shouldnothideelements.GetBool() && local->GetWeapon() //LYCHY TODO
+
 	}
 
 	// Only update the fade if we've changed health

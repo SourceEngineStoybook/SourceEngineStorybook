@@ -44,6 +44,11 @@ public:
 
 	DECLARE_SERVERCLASS();
 
+	bool	HasIronsights(void)
+	{
+		return false;
+	}
+
 	void	Precache( void );
 	void	ItemPostFrame( void );
 	void	ItemPreFrame( void );

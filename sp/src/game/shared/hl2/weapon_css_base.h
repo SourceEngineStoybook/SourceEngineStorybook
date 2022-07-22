@@ -20,7 +20,7 @@
 // Makes all CS:S weapons precache on map load, just like HL2's weapons.
 // This means CS:S weapons are always precached even when not in use by the current level.
 // This is left off by default to save resources.
-#define PRECACHE_REGISTER_CSS_WEAPONS 0
+#define PRECACHE_REGISTER_CSS_WEAPONS 1
 
 // TODO: Enables code linking classes to the original CS:S classnames
 #define ALLOW_ORIGINAL_CSS_CLASSNAMES 1
@@ -539,7 +539,8 @@ public:
 
 		CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
-		if (pPlayer->m_afButtonPressed & IN_ATTACK2)
+		
+		if (pPlayer->m_afButtonPressed & IN_IRONSIGHT || pPlayer->m_afButtonPressed & IN_ATTACK2) //LYCHY: previously just IN_ATTACK2
 		{
 			this->ToggleZoom();
 		}
@@ -606,6 +607,13 @@ public:
 			if ( pPlayer->SetFOV( this, 0, this->GetUnZoomRate() ) )
 			{
 				this->m_bInZoom = false;
+#ifndef CLIENT_DLL
+				// Send a message to hide the scope
+				CSingleUserRecipientFilter filter(pPlayer);
+				UserMessageBegin(filter, "ShowScope");
+				WRITE_BYTE(0);
+				MessageEnd();
+#endif
 			}
 		}
 		else
@@ -613,12 +621,19 @@ public:
 			if ( pPlayer->SetFOV( this, this->GetZoomFOV(), this->GetZoomRate() ) )
 			{
 				this->m_bInZoom = true;
+#ifndef CLIENT_DLL
+				// Send a message to show the scope
+				CSingleUserRecipientFilter filter(pPlayer);
+				UserMessageBegin(filter, "ShowScope");
+				WRITE_BYTE(1);
+				MessageEnd();
+#endif
 			}
 		}
 
 		WeaponSound( SPECIAL3 );
 
-		// Scope overlay handled by CBase_CSS_HL2_SniperRifle
+		// Scope overlay handled by hud_scope.cpp
 	}
 	
 public:

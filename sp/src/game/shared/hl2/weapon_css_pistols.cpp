@@ -571,6 +571,7 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 CWeapon_CSS_HL2_DualBerettas::CWeapon_CSS_HL2_DualBerettas( void )
 {
+	m_bIronSightShouldNotHideCrosshair = true;
 }
 
 //-----------------------------------------------------------------------------

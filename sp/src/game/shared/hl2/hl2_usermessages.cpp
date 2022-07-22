@@ -17,6 +17,7 @@
 
 void RegisterUserMessages( void )
 {
+	usermessages->Register("ShowScope", 1); // show the sniper scope
 	usermessages->Register( "Geiger", 1 );
 	usermessages->Register( "Train", 1 );
 	usermessages->Register( "HudText", -1 );
