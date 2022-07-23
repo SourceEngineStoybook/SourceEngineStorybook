@@ -43,6 +43,10 @@
 #define IN_GRENADE2		(1 << 24)	// grenade 2
 #define	IN_ATTACK3		(1 << 25)
 
+//WEAPON_IRONSIGHT
+#define	IN_IRONSIGHT	(1 << 26)
+//WEAPON_IRONSIGHT
+
 #ifdef VGUI_SCREEN_FIX
 #define IN_VALIDVGUIINPUT		    (1 << 23) //bitflag for vgui fix
 #endif

@@ -43,6 +43,12 @@ public:
 	CWeaponPistol(void);
 
 	DECLARE_SERVERCLASS();
+	//WEAPON_IRONSIGHT
+	bool	HasIronsights(void)
+	{
+		return false;
+	}
+	//WEAPON_IRONSIGHT
 
 	void	Precache( void );
 	void	ItemPostFrame( void );

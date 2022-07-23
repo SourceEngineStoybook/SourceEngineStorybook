@@ -690,10 +690,11 @@ void CBase_CSS_HL2_SniperRifle::FireBullets( const FireBulletsInfo_t &info )
 
 	BaseClass::FireBullets( newInfo );
 }
-
+class C_BaseViewModel;
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+
 void CBase_CSS_HL2_SniperRifle::ToggleZoom( void )
 {
 	BaseClass::ToggleZoom();
@@ -702,11 +703,13 @@ void CBase_CSS_HL2_SniperRifle::ToggleZoom( void )
 	
 	if ( pPlayer == NULL )
 		return;
-
 	switch (m_nZoomLevel)
 	{
 		case 0:
 			// Turn on zoom to level 1
+#ifndef CLIENT_DLL
+			engine->ClientCommand(UTIL_GetLocalPlayer()->edict(), "weapon_css_scope_hideviewmodel 1\n"); //LYCHY
+#endif
 			if ( pPlayer->SetFOV( this, GetZoom1FOV(), GetZoomRate() ) )
 				m_nZoomLevel++;
 			break;
@@ -717,6 +720,9 @@ void CBase_CSS_HL2_SniperRifle::ToggleZoom( void )
 			break;
 		case 2:
 			// Unzoom
+#ifndef CLIENT_DLL
+			engine->ClientCommand(UTIL_GetLocalPlayer()->edict(), "weapon_css_scope_hideviewmodel 0\n"); //LYCHY
+#endif
 			if ( pPlayer->SetFOV( this, 0, GetUnZoomRate() ) )
 				m_nZoomLevel = 0;
 			break;
@@ -768,7 +774,9 @@ void CBase_CSS_HL2_SniperRifle::StopZoom( void )
 	UserMessageBegin(filter, "ShowScope");
 	WRITE_BYTE(0);
 	MessageEnd();
+	engine->ClientCommand(UTIL_GetLocalPlayer()->edict(), "weapon_css_scope_hideviewmodel 0\n");
 #endif
+
 	// Unzoom
 	if ( pPlayer->SetFOV( this, 0, GetUnZoomRate() ) )
 		m_nZoomLevel = 0;
@@ -919,7 +927,7 @@ float CBase_CSS_HL2_Shotgun::GetMaxRestTime()
 bool CBase_CSS_HL2_Shotgun::StartReload( void )
 {
 	CBaseCombatCharacter *pOwner  = GetOwner();
-	
+
 	if ( pOwner == NULL )
 		return false;
 
@@ -934,6 +942,7 @@ bool CBase_CSS_HL2_Shotgun::StartReload( void )
 	//NOTENOTE: This is kinda lame because the player doesn't get strong feedback on when the reload has finished,
 	//			without the pump.  Technically, it's incorrect, but it's good for feedback...
 
+	DisableIronsights(1); //WEAPON_IRONSIGHT
 	if (m_iClip1 <= 0 && CanPump())
 	{
 		m_bNeedPump = true;
@@ -1023,9 +1032,14 @@ void CBase_CSS_HL2_Shotgun::FinishReload( void )
 
 	// Finish reload animation
 	SendWeaponAnim( ACT_SHOTGUN_RELOAD_FINISH );
-
 	pOwner->m_flNextAttack = gpGlobals->curtime;
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+	
+	//WEAPON_IRONSIGHT -- LYCHY
+	CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(pOwner); 
+	if (pPlayer && (pPlayer->m_afButtonLast & IN_IRONSIGHT || m_bisIronSightComingBack))
+		EnableIronsights();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -1301,7 +1315,13 @@ void CBase_CSS_HL2_Shotgun::ItemPostFrame( void )
 		Pump();
 		return;
 	}
-	
+	if(!m_bInReload)
+		HoldingIronsightKey(); //WEAPON_IRONSIGHT
+	else
+	{
+		//Input buffer to ironsight again when we finish 
+
+	}
 	// Shotgun uses same timing and ammo for secondary attack
 	if ((m_bDelayedFire2 || pOwner->m_nButtons & IN_ATTACK2)&&(m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
@@ -1409,7 +1429,7 @@ void CBase_CSS_HL2_Shotgun::ItemPostFrame( void )
 		WeaponIdle( );
 		return;
 	}
-
+	
 }
 
 //-----------------------------------------------------------------------------

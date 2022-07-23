@@ -539,7 +539,8 @@ public:
 
 		CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
-		if (pPlayer->m_afButtonPressed & IN_ATTACK2)
+		
+		if (pPlayer->m_afButtonPressed & IN_IRONSIGHT || pPlayer->m_afButtonPressed & IN_ATTACK2) //LYCHY: previously just IN_ATTACK2
 		{
 			this->ToggleZoom();
 		}
@@ -606,6 +607,13 @@ public:
 			if ( pPlayer->SetFOV( this, 0, this->GetUnZoomRate() ) )
 			{
 				this->m_bInZoom = false;
+#ifndef CLIENT_DLL
+				// Send a message to hide the scope
+				CSingleUserRecipientFilter filter(pPlayer);
+				UserMessageBegin(filter, "ShowScope");
+				WRITE_BYTE(0);
+				MessageEnd();
+#endif
 			}
 		}
 		else
@@ -613,12 +621,19 @@ public:
 			if ( pPlayer->SetFOV( this, this->GetZoomFOV(), this->GetZoomRate() ) )
 			{
 				this->m_bInZoom = true;
+#ifndef CLIENT_DLL
+				// Send a message to show the scope
+				CSingleUserRecipientFilter filter(pPlayer);
+				UserMessageBegin(filter, "ShowScope");
+				WRITE_BYTE(1);
+				MessageEnd();
+#endif
 			}
 		}
 
 		WeaponSound( SPECIAL3 );
 
-		// Scope overlay handled by CBase_CSS_HL2_SniperRifle
+		// Scope overlay handled by hud_scope.cpp
 	}
 	
 public:

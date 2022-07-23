@@ -102,6 +102,9 @@ extern ConVar r_depthoverlay;
 extern ConVar mat_viewportscale;
 extern ConVar mat_viewportupscale;
 extern bool g_bDumpRenderTargets;
+//WEAPON_IRONSIGHT
+ConVar weapon_css_scope_hideviewmodel("weapon_css_scope_hideviewmodel", "0",FCVAR_HIDDEN);
+//WEAPON_IRONSIGHT
 
 //-----------------------------------------------------------------------------
 // Convars related to controlling rendering
@@ -1004,7 +1007,10 @@ bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 
 	if ( render->GetViewEntity() > gpGlobals->maxClients )
 		return false;
-
+	//WEAPON_IRONSIGHT
+	if (weapon_css_scope_hideviewmodel.GetBool())
+		return false;
+	//WEAPON_IRONSIGHT
 	return true;
 }
 
