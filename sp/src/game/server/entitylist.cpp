@@ -402,12 +402,14 @@ void CGlobalEntityList::Clear( void )
 	// free the memory
 	g_DeleteList.Purge();
 
+#if 0 //LYCHY FIXME What is this?
 #ifdef _DEBUG // From Alien Swarm SDK
 	for ( UtlHashHandle_t handle = g_EntsByClassname.GetFirstHandle(); g_EntsByClassname.IsValidHandle(handle);	handle = g_EntsByClassname.GetNextHandle(handle) )
 	{
 		EntsByStringList_t &element = g_EntsByClassname[handle];
 		Assert( element.pHead == NULL );
 	}
+#endif
 #endif
 
 #ifdef MAPBASE_VSCRIPT

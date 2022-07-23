@@ -8,11 +8,13 @@ $Configuration
 {
 	$Compiler
 	{
+		$AdditionalIncludeDirectories "$BASE;$SRCDIR\game\client\storybook"
 		$PreprocessorDefinitions		"$BASE;ASW_PROJECTED_TEXTURES;DYNAMIC_RTT_SHADOWS;GLOWS_ENABLE"
 		
 		$PreprocessorDefinitions		"$BASE;MAPBASE_RPC;DISCORD_RPC;STEAM_RPC"	[$MAPBASE_RPC]
 		$PreprocessorDefinitions		"$BASE;MAPBASE_VSCRIPT"		[$MAPBASE_VSCRIPT]
 		$PreprocessorDefinitions		"$BASE;NEW_RESPONSE_SYSTEM"		[$NEW_RESPONSE_SYSTEM]
+		$TreatWarningsAsErrors		"No (/WX-)"
 	}
 }
 
@@ -72,6 +74,7 @@ $Project
 		{
 			$File	"storybook\vgui_keypad.cpp"
 			$File	"storybook\vgui_keypad.h"
+			$File 	"hud_scope.cpp"
 		}
 
 		$Folder "HL2 DLL"

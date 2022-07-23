@@ -10,6 +10,7 @@
 #include "doors.h"
 #include "entitylist.h"
 #include "globals.h"
+#include "playerstart.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -63,10 +64,28 @@ BEGIN_DATADESC( CBaseDMStart )
 
 END_DATADESC()
 
+BEGIN_DATADESC(CPlayerStart)
+	DEFINE_KEYFIELD(m_szPlayerModel[0],FIELD_STRING,"playermodel0"),
+	DEFINE_KEYFIELD(m_szPlayerModel[1],FIELD_STRING,"playermodel1"),
+	DEFINE_KEYFIELD(m_szPlayerModel[2],FIELD_STRING,"playermodel2"),
+	DEFINE_KEYFIELD(m_szPlayerModel[3],FIELD_STRING,"playermodel3"),
+END_DATADESC()
+
+void CPlayerStart::Spawn() 
+{
+	for (int i = 0; i < MAX_NUM_PLAYERMODELS; i++)
+	{
+		const char* cStrPlayermodel = m_szPlayerModel[i].ToCStr();
+		if (strcmp(cStrPlayermodel, "") != 0)
+			PrecacheModel(cStrPlayermodel);
+		BaseClass::Spawn();
+	}
+}
+
 
 // These are the new entry points to entities. 
 LINK_ENTITY_TO_CLASS(info_player_deathmatch,CBaseDMStart);
-LINK_ENTITY_TO_CLASS(info_player_start,CPointEntity);
+LINK_ENTITY_TO_CLASS(info_player_start,CPlayerStart);
 LINK_ENTITY_TO_CLASS(info_landmark,CPointEntity);
 
 bool CBaseDMStart::IsTriggered( CBaseEntity *pEntity )

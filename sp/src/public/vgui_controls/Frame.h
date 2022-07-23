@@ -190,6 +190,9 @@ protected:
 	// optimization, return true if this control has any user config settings
 	virtual bool HasUserConfigSettings();
 
+	//LYCHY error C2039: 'CheckDeclareClass' : is not a member of 'vgui::Frame' (storybook\vgui_keypad.cpp) quick fix, msg if theres a better way
+	 static int CheckDeclareClass(const char* pShouldBe) { return -1; }
+
 private:
 	MESSAGE_FUNC_CHARPTR( InternalSetTitle, "SetTitle", text );
 	MESSAGE_FUNC( InternalFlashWindow, "FlashWindow" );
