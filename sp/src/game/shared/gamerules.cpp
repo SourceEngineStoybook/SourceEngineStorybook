@@ -27,6 +27,7 @@
 	#include "player_resource.h"
 	#include "tactical_mission.h"
 	#include "gamestats.h"
+	#include "playerstart.h"
 
 #endif
 
@@ -256,6 +257,34 @@ CBaseEntity *CGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
 	pPlayer->m_Local.m_vecPunchAngleVel = vec3_angle;
 	pPlayer->SnapEyeAngles( pSpawnSpot->GetLocalAngles() );
+
+	CPlayerStart* pPlayerStart = dynamic_cast<CPlayerStart*>(pSpawnSpot);
+	
+	if (pPlayerStart)
+	{
+		const char* pListPlayerModels[MAX_NUM_PLAYERMODELS]{0,0,0,0};
+		byte counter = 0;
+		const char* m_cStrPlayerModel = NULL;
+
+		for (int i = 0; i < MAX_NUM_PLAYERMODELS; i++)
+		{
+			m_cStrPlayerModel = pPlayerStart->m_szPlayerModel[i].ToCStr();
+			if (strcmp(m_cStrPlayerModel,"") != 0 )
+			{
+				pListPlayerModels[counter] = m_cStrPlayerModel;
+
+				counter++;
+			}
+			
+		}
+		if (counter) 
+		{
+			int randModel = RandomInt(0, counter -1 );
+			pPlayer->SetModel(pListPlayerModels[randModel]);
+		}
+
+	}
+
 
 	return pSpawnSpot;
 }
