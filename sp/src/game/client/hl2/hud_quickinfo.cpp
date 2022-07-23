@@ -246,6 +246,10 @@ void CHUDQuickInfo::Paint()
 	C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
 	if ( pWeapon == NULL )
 		return;
+	//WEAPON_IRONSIGHT
+	if (!pWeapon->m_bIronSightShouldNotHideCrosshair && pWeapon->IsIronsighted())
+		return;
+	//WEAPON_IRONSIGHT
 
 	float fX, fY;
 	bool bBehindCamera = false;

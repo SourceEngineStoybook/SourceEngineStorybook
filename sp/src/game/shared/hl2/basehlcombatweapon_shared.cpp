@@ -48,6 +48,10 @@ BEGIN_PREDICTION_DATA( CBaseHLCombatWeapon )
 END_PREDICTION_DATA()
 
 ConVar sk_auto_reload_time( "sk_auto_reload_time", "3", FCVAR_REPLICATED );
+//WEAPON_IRONSIGHT
+ConVar viewmodel_ironsighted_lateralbobscale("viewmodel_ironsighted_lateralbobscale", "0.05f");
+ConVar viewmodel_ironsighted_verticalbobscale("viewmodel_ironsighted_verticalbobscale", "0.05f");
+//WEAPON_IRONSIGHT
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -325,6 +329,13 @@ float CBaseHLCombatWeapon::CalcViewmodelBob( void )
 		g_lateralBob *= GetBobScale();
 	}
 #endif
+	//WEAPON_IRONSIGHT
+	if (m_bIsIronsighted) //LYCHY scale down ironsighted bob
+	{
+		g_verticalBob *= viewmodel_ironsighted_verticalbobscale.GetFloat();
+		g_lateralBob *= viewmodel_ironsighted_lateralbobscale.GetFloat();
+	}
+	//WEAPON_IRONSIGHT
 	
 	//NOTENOTE: We don't use this return value in our case (need to restructure the calculation function setup!)
 	return 0.0f;

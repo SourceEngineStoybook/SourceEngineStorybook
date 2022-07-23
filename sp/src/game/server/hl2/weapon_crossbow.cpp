@@ -878,11 +878,12 @@ void CWeaponCrossbow::Reload_NPC( bool bPlaySound )
 void CWeaponCrossbow::CheckZoomToggle( void )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
-	
-	if ( pPlayer->m_afButtonPressed & IN_ATTACK2 )
+	//WEAPON_IRONSIGHT
+	if ( pPlayer->m_afButtonPressed & IN_ATTACK2 || pPlayer->m_afButtonPressed & IN_IRONSIGHT)
 	{
 			ToggleZoom();
 	}
+	//WEAPON_IRONSIGHT
 }
 
 //-----------------------------------------------------------------------------

@@ -84,6 +84,10 @@ ConVar thirdperson_screenspace( "thirdperson_screenspace", "0", 0, "Movement wil
 
 ConVar sv_noclipduringpause( "sv_noclipduringpause", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "If cheats are enabled, then you can noclip with the game paused (for doing screenshots, etc.)." );
 
+//WEAPON_IRONSIGHT
+ConVar hl2_weapons_use_ironsight("hl2_weapons_use_ironsight", "0", 0, "Enable to have +attack2 to activate ironsights and +attack3 to do the secondary attack"); // LYCHY
+//WEAPON_IRONSIGHT
+
 extern ConVar cl_mouselook;
 
 #define UsingMouselook() cl_mouselook.GetBool()
@@ -144,6 +148,10 @@ static  kbutton_t   in_grenade1;
 static  kbutton_t   in_grenade2;
 static	kbutton_t	in_attack3;
 kbutton_t	in_ducktoggle;
+
+//WEAPON_IRONSIGHT
+static	kbutton_t	in_ironsight;
+//WEAPON_IRONSIGHT
 
 /*
 ===========
@@ -435,6 +443,12 @@ void IN_BreakUp( const CCommand &args )
 	DebuggerBreak();
 #endif
 };
+
+//WEAPON_IRONSIGHT
+void IN_IronsightDown(const CCommand& args) { KeyDown(&in_ironsight, args[1]); }
+void IN_IronsightUp(const CCommand& args) { KeyUp(&in_ironsight, args[1]); }
+//WEAPON_IRONSIGHT
+
 void IN_KLookDown ( const CCommand &args ) {KeyDown(&in_klook, args[1] );}
 void IN_KLookUp ( const CCommand &args ) {KeyUp(&in_klook, args[1] );}
 void IN_JLookDown ( const CCommand &args ) {KeyDown(&in_jlook, args[1] );}
@@ -465,8 +479,22 @@ void IN_SpeedDown( const CCommand &args ) {KeyDown(&in_speed, args[1] );}
 void IN_SpeedUp( const CCommand &args ) {KeyUp(&in_speed, args[1] );}
 void IN_StrafeDown( const CCommand &args ) {KeyDown(&in_strafe, args[1] );}
 void IN_StrafeUp( const CCommand &args ) {KeyUp(&in_strafe, args[1] );}
-void IN_Attack2Down( const CCommand &args ) { KeyDown(&in_attack2, args[1] );}
-void IN_Attack2Up( const CCommand &args ) {KeyUp(&in_attack2, args[1] );}
+//WEAPON_IRONSIGHT
+void IN_Attack2Down( const CCommand &args )
+{
+	if (hl2_weapons_use_ironsight.GetBool())
+		KeyDown(&in_ironsight, args[1]);
+	else
+		KeyDown(&in_attack2, args[1] );
+}
+void IN_Attack2Up( const CCommand &args ) 
+{
+	if (hl2_weapons_use_ironsight.GetBool())
+		KeyUp(&in_ironsight, args[1]);
+	else
+		KeyUp(&in_attack2, args[1] );
+}
+//WEAPON_IRONSIGHT
 void IN_UseDown ( const CCommand &args ) {KeyDown(&in_use, args[1] );}
 void IN_UseUp ( const CCommand &args ) {KeyUp(&in_use, args[1] );}
 void IN_JumpDown ( const CCommand &args ) {KeyDown(&in_jump, args[1] );}
@@ -488,8 +516,43 @@ void IN_Grenade1Down( const CCommand &args ) { KeyDown( &in_grenade1, args[1] );
 void IN_Grenade2Up( const CCommand &args ) { KeyUp( &in_grenade2, args[1] ); }
 void IN_Grenade2Down( const CCommand &args ) { KeyDown( &in_grenade2, args[1] ); }
 void IN_XboxStub( const CCommand &args ) { /*do nothing*/ }
-void IN_Attack3Down( const CCommand &args ) { KeyDown(&in_attack3, args[1] );}
-void IN_Attack3Up( const CCommand &args ) { KeyUp(&in_attack3, args[1] );}
+void IN_Attack3Down( const CCommand &args )
+{ 
+	if(hl2_weapons_use_ironsight.GetBool())
+		KeyDown(&in_attack2, args[1]);
+	else
+		KeyDown(&in_attack3, args[1] );
+	
+}
+void IN_Attack3Up( const CCommand &args )
+{
+	if (hl2_weapons_use_ironsight.GetBool())
+		KeyUp(&in_attack2, args[1]);
+	else
+		KeyUp(&in_attack3, args[1] );
+}
+
+//WEAPON_IRONSIGHT //This will never work on server...
+/*void CC_ToggleIronSights(void)
+{
+	CBasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	if (pPlayer == NULL)
+		return;
+
+	CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
+	if (pWeapon == NULL)
+		return;
+
+	pWeapon->ToggleIronsights();
+
+	engine->ServerCmd("toggle_ironsight"); //forward to server
+}*/
+
+void IN_Ironsight(const CCommand& args)
+{
+	KeyDown(&in_ironsight, args[1]);
+}
+//WEAPON_IRONSIGHT
 
 void IN_DuckToggle( const CCommand &args ) 
 { 
@@ -505,13 +568,13 @@ void IN_DuckToggle( const CCommand &args )
 
 void IN_AttackDown( const CCommand &args )
 {
-	KeyDown( &in_attack, args[1] );
+		KeyDown(&in_attack, args[1]);
 }
 
-void IN_AttackUp( const CCommand &args )
+void IN_AttackUp(const CCommand& args)
 {
-	KeyUp( &in_attack, args[1] );
-	in_cancel = 0;
+		KeyUp(&in_attack, args[1]);
+		in_cancel = 0;
 }
 
 // Special handling
@@ -1451,6 +1514,10 @@ int CInput::GetButtonBits( int bResetState )
 {
 	int bits = 0;
 
+	//WEAPON_IRONSIGHT
+	CalcButtonBits( bits, IN_IRONSIGHT, s_ClearInputState, &in_ironsight, bResetState );
+	//WEAPON_IRONSIGHT
+
 	CalcButtonBits( bits, IN_SPEED, s_ClearInputState, &in_speed, bResetState );
 	CalcButtonBits( bits, IN_WALK, s_ClearInputState, &in_walk, bResetState );
 	CalcButtonBits( bits, IN_ATTACK, s_ClearInputState, &in_attack, bResetState );
@@ -1561,7 +1628,6 @@ void CInput::AddIKGroundContactInfo( int entindex, float minheight, float maxhei
 }
 #endif
 
-
 static ConCommand startcommandermousemove("+commandermousemove", IN_CommanderMouseMoveDown);
 static ConCommand endcommandermousemove("-commandermousemove", IN_CommanderMouseMoveUp);
 static ConCommand startmoveup("+moveup",IN_UpDown);
@@ -1633,6 +1699,11 @@ static ConCommand endattack3("-attack3", IN_Attack3Up);
 #ifdef TF_CLIENT_DLL
 static ConCommand toggle_duck( "toggle_duck", IN_DuckToggle );
 #endif
+
+//WEAPON_IRONSIGHT
+static ConCommand startironsight("+ironsight", IN_IronsightDown);
+static ConCommand endironsight("-ironsight", IN_IronsightUp);
+//WEAPON_IRONSIGHT
 
 // Xbox 360 stub commands
 static ConCommand xboxmove("xmove", IN_XboxStub);

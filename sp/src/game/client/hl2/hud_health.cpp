@@ -36,6 +36,10 @@ using namespace vgui;
 
 #define INIT_HEALTH -1
 
+//WEAPON_IRONSIGHT
+ConVar weapon_ironsight_shouldnothideelements("weapon_ironsight_shouldnothideelements", "0");
+//WEAPON_IRONSIGHT
+
 //-----------------------------------------------------------------------------
 // Purpose: Health panel
 //-----------------------------------------------------------------------------
@@ -118,6 +122,7 @@ void CHudHealth::OnThink()
 	{
 		// Never below zero
 		newHealth = MAX( local->GetHealth(), 0 );
+		//if(weapon_ironsight_shouldnothideelements.GetBool() && local->GetWeapon() //LYCHY TODO
 	}
 
 	// Only update the fade if we've changed health

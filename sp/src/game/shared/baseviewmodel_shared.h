@@ -43,14 +43,17 @@ public:
 							CBaseViewModel( void );
 							~CBaseViewModel( void );
 
+	bool					IsViewable(void) { return false; }
 
-	bool IsViewable(void) { return false; }
-
-	virtual void					UpdateOnRemove( void );
+	virtual void			UpdateOnRemove( void );
 
 	// Weapon client handling
 	virtual void			SendViewModelMatchingSequence( int sequence );
 	virtual void			SetWeaponModel( const char *pszModelname, CBaseCombatWeapon *weapon );
+
+	//WEAPON_IRONSIGHT
+	void					CalcIronsights(Vector& pos, QAngle& ang);
+	//WEAPON_IRONSIGHT
 
 	virtual void			CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles );
 	virtual void			CalcViewModelView( CBasePlayer *owner, const Vector& eyePosition, 
