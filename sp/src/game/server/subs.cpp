@@ -78,8 +78,9 @@ void CPlayerStart::Spawn()
 		const char* cStrPlayermodel = m_szPlayerModel[i].ToCStr();
 		if (strcmp(cStrPlayermodel, "") != 0)
 			PrecacheModel(cStrPlayermodel);
-		BaseClass::Spawn();
+	
 	}
+	BaseClass::Spawn();
 }
 
 
