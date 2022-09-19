@@ -98,6 +98,7 @@ $Project
 			$File	"storybook\point_keypad.cpp"
 			$File	"storybook\point_keypad.h"
 			$File	"storybook\playerstart.h"
+			$File	"storybook\button_props.cpp"
 		}
 
 		$Folder "HL2 DLL"
