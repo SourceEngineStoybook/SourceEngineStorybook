@@ -142,7 +142,9 @@ $Project "Client (Episodic)"
 			
 			$Folder "DOD:S Weapons"
 			{
-				$File	"$SRCDIR\game\shared\hl2\weapon_dods_pistols.cpp"
+				$File	"$SRCDIR\game\shared\storybook\weapon_dods_pistols.cpp"
+				$File	"$SRCDIR\game\shared\storybook\weapon_dods_rifles.cpp"
+				$File	"$SRCDIR\game\shared\storybook\weapon_dods_smgs.cpp"
 			}
 		}
 	}
