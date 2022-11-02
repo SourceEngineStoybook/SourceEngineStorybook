@@ -1,0 +1,252 @@
+//==================================================================================================
+//
+// Day - Night side shader for fake Planet. Written by White_Red_Dragons ( ShiroDkxtro2#8750 )
+//
+//==================================================================================================
+
+// STATIC: "FLASHLIGHT"                 "0..1"
+// STATIC: "FLASHLIGHTDEPTHFILTERMODE"  "0..2"
+// STATIC: "ENVIRONMENTMAPPING"			"0..1"
+// STATIC: "LIGHTWARP"					"0..1"
+// STATIC: "HALFLAMBERT"				"0..1"
+
+// DYNAMIC: "WRITEWATERFOGTODESTALPHA"  "0..1"
+// DYNAMIC: "PIXELFOGTYPE"              "0..1"
+// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"  "0..1"
+// DYNAMIC: "NUM_LIGHTS"				"0..4"
+// DYNAMIC: "AMBIENT_LIGHT"				"0..1"
+
+// We don't use light combos when doing the flashlight
+// SKIP: ( $FLASHLIGHT != 0 ) && ( $NUM_LIGHTS > 0 )
+// Can't write fog to alpha if there is no fog
+// SKIP: ($PIXELFOGTYPE == 0) && ($WRITEWATERFOGTODESTALPHA != 0)
+// We don't care about flashlight depth unless the flashlight is on
+// SKIP: ( $FLASHLIGHT == 0 ) && ( $FLASHLIGHTSHADOWS == 1 )
+// Flashlight shadow filter mode is irrelevant if there is no flashlight
+// SKIP: ( $FLASHLIGHT == 0 ) && ( $FLASHLIGHTDEPTHFILTERMODE != 0 )
+
+#include "common_ps_fxc.h"
+#include "common_flashlight_fxc.h"
+#include "shader_constant_register_map.h"
+
+// Need an include for VLG Shader Functions
+#include "common_vertexlitgeneric_dx9.h"
+
+
+// WRD : I put some comments here. They are the USED registers!!!
+// What does that mean? It means you owe me a beer
+
+//  01 - Linear Color Space related
+const float4 g_DiffuseModulation                : register(PSREG_DIFFUSE_MODULATION);
+//  02
+const float4 g_ShadowTweaks                     : register(PSREG_ENVMAP_TINT__SHADOW_TWEAKS);
+//  04-09
+const float3 cAmbientCube[6]                    :	register(PSREG_AMBIENT_CUBE);
+//  11 - Eyeposition, usually has EnvMapLod in Alpha but no need here
+const float4 g_EyePos                           : register(PSREG_EYEPOS_SPEC_EXPONENT);
+#define ENVMAPLOD (g_EyePos.a)
+//  12 - Fog stuff
+const float4 g_FogParams                        : register(PSREG_FOG_PARAMS);
+//  13 - Flashlight
+const float4 g_FlashlightAttenuationFactors     : register(PSREG_FLASHLIGHT_ATTENUATION);
+//  14 - Flashlight
+const float4 g_FlashlightPos                    : register(PSREG_FLASHLIGHT_POSITION_RIM_BOOST);
+//  15-18 - Flashlight
+const float4x4 g_FlashlightWorldToTexture       : register(PSREG_FLASHLIGHT_TO_WORLD_TEXTURE);
+//  20-25 - Used for Light Information
+PixelShaderLightInfo cLightInfo[3]              : register(PSREG_LIGHT_INFO_ARRAY);         // 2 registers each - 6 registers total (4th light spread across w's)
+
+// Also used for whatever reason : 28, 30, 31
+// probably flashlight related
+
+const float4 g_LightPower						: register(c27);
+
+
+//	Basetexture
+sampler BaseTexture1Sampler						:	register(s0);
+
+//	Second Basetexture
+sampler BaseTexture2Sampler						:	register(s1);
+
+// Normal Map Sampler
+sampler NormalMapSampler						:	register(s2);
+
+// Envmapping
+sampler EnvironmentMapSampler					:	register(s3);
+
+// Flashlight shadow depth map sampler
+sampler ShadowDepthSampler						:	register(s4);
+
+// RandomRotation sampler
+sampler RandRotSampler							:	register(s5);
+
+// Flashlight cookie
+sampler FlashlightSampler						:	register(s6);
+
+// NormalizeSampler ( Basically not used, still needed though )
+sampler NormalizationSampler					:	register(s11);
+
+// Lighting warp sampler (1D texture for diffuse lighting modification)
+sampler DiffuseWarpSampler						:	register(s12);
+
+// EnvMapMask
+sampler EnvMapMaskSampler						:	register(s13);
+
+
+// Here we get anything that the VertexShader can spit us out. Pretty important things for most effects and it lacks some stuff right now for VLG related effects
+struct PS_INPUT
+{
+    float2 baseTexCoord							:	TEXCOORD0;
+    float4 lightAtten							:	TEXCOORD1;
+    float3 worldNormal							:	TEXCOORD2;
+    float3 worldPos								:	TEXCOORD3;
+    float3 projPos								:	TEXCOORD4;
+
+    float4 lightmapTexCoord1And2				:	TEXCOORD5; 
+    float4 lightmapTexCoord3					:	TEXCOORD6;
+
+	float4 StaticVertexLighting					: TEXCOORD7;		// Vertex color (from lighting or unlit)
+};
+  
+// Entry point
+float4 main(PS_INPUT i) : COLOR
+{ // 1
+
+	int nNumLights = NUM_LIGHTS;
+	bool bDoDiffuseWarp		= LIGHTWARP			? true : false;
+	bool bHalfLambert		= HALFLAMBERT		? true : false;
+	bool bAmbientLight		= AMBIENT_LIGHT		? true : false;
+
+	// We don't do Vertex->Pixelshader Tangent normals, we do this instead like the PBR shader because it requires less _vs outputs
+	// However it might cause sloped surfaces ( smoothed surfaces ) to look like they are flat shaded according to Tottery
+	// BUT I don't know anyone that ever had this problem so I decided to disregard Tottery's message \o/
+
+	float3 surfNormal = normalize(i.worldNormal);
+    float3 surfTangent;
+    float3 surfBase; 
+    float flipSign;
+
+	float3 dp1 = ddx(i.worldPos);
+	float3 dp2 = ddy(i.worldPos);
+	float2 duv1 = ddx(i.baseTexCoord);
+	float2 duv2 = ddy(i.baseTexCoord);
+
+	flipSign = dot(dp2, cross(surfNormal, dp1)) > 0.0 ? -1 : 1;
+
+	float3x3 M = float3x3(dp1, dp2, cross(dp1, dp2));
+	float2x3 inverseM = float2x3(cross(M[1], M[2]), cross(M[2], M[0]));
+	surfTangent = normalize(mul(float2(duv1.x, duv2.x), inverseM));
+	surfBase = normalize(mul(float2(duv1.y, duv2.y), inverseM));
+
+    float3x3 normalBasis = { surfTangent, surfBase, surfNormal };
+
+// Corrected BaseTexCoords
+    float2 correctedTexCoord = i.baseTexCoord;
+
+// BaseTexture floats
+    float4 BaseTexture1 = tex2D(BaseTexture1Sampler, correctedTexCoord);
+	float4 BaseTexture2 = tex2D(BaseTexture2Sampler, correctedTexCoord);
+    BaseTexture1.xyz *= g_DiffuseModulation;
+	BaseTexture2.xyz *= g_DiffuseModulation;
+
+    float3 NormalTexture = normalize((tex2D( NormalMapSampler,  correctedTexCoord).xyz - float3(0.5, 0.5, 0.5)) * 2);
+
+    float3 normal = normalize(mul(NormalTexture, normalBasis)); // World Normal
+
+    // Prepare diffuseLighting
+	float3 diffuseLighting = 1.0;
+
+// IMPORTANT, no flashlight
+if (!FLASHLIGHT)
+{
+		float3 empty = 0.0f;
+		diffuseLighting = PixelShaderDoLighting( i.worldPos.xyz, normal,
+				empty, false, bAmbientLight, i.lightAtten,
+				cAmbientCube, NormalizationSampler, nNumLights, cLightInfo, bHalfLambert,
+				false, 1.0f, bDoDiffuseWarp, DiffuseWarpSampler );
+}
+
+if (FLASHLIGHT)
+{ //3
+		// Just like in stock vlg Except we Clip the result
+        float4 flashlightSpacePosition = mul(float4(i.worldPos, 1.0), g_FlashlightWorldToTexture);
+        clip( flashlightSpacePosition.w ); // stop projected textures from projecting backwards (only really happens if they have a big FOV because they get frustum culled.)
+
+		// We do diffuse only version
+		// if error from FLASHLIGHTDEPTHFILTERMODE use this
+		//int nShadowSampleLevel = 0;
+		//nShadowSampleLevel = FLASHLIGHTDEPTHFILTERMODE;
+		// magical code ( Look in common_flashlight_fxc.h for actual function )
+		float3 FlashlightFinal = DoFlashlight( g_FlashlightPos, i.worldPos.xyz, flashlightSpacePosition,
+			i.worldNormal.xyz, g_FlashlightAttenuationFactors.xyz, 
+			g_FlashlightAttenuationFactors.w, FlashlightSampler, ShadowDepthSampler,
+			RandRotSampler, FLASHLIGHTDEPTHFILTERMODE, true, false, i.projPos.xy / i.projPos.z, false, g_ShadowTweaks, true );
+			// the second last bool is probably worthless, its not even mentioned. In either case we clip it before so setting it to false is probably correct
+
+		// Other lighting is disabled with Flashlight on, therefore just overwriting is faster and better than doing +=
+		diffuseLighting += FlashlightFinal;
+} //3
+
+// CalcPixelFogFactor is a function from common_ps_fxc.h Which is included at the beginning of the shader
+    float fogFactor = CalcPixelFogFactor(PIXELFOGTYPE, g_FogParams, g_EyePos.xyz, i.worldPos.xyz, i.projPos.z);
+#if !FLASHLIGHT
+
+#if WRITEWATERFOGTODESTALPHA && (PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT)
+    float alpha = fogFactor;
+#else
+    float alpha = BaseTexture1.a;
+#endif // WRITEWATERFOGTODESTALPHA && (PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT)
+
+#else
+    float alpha = 0.0f;
+#endif // !FLASHLIGHT
+
+    bool bWriteDepthToAlpha = (WRITE_DEPTH_TO_DESTALPHA != 0) && (WRITEWATERFOGTODESTALPHA == 0);
+
+// This is probably very very important
+    alpha *= g_DiffuseModulation.a;
+
+	float LightMask = saturate(diffuseLighting);
+	LightMask = pow(LightMask, g_LightPower.x);
+
+	float3	DaySide = BaseTexture1.xyz;
+	float3	NightSide = BaseTexture2.xyz;
+
+	NightSide = NightSide - (NightSide * saturate(diffuseLighting));
+
+// WRD :	You CAN use one model. However I advise you to use two models.
+//			The lighting can be kinda small in its fade, so using a second model with a black side,
+//			you can use $additive to have a harder cut for one of the two textures - In Lighting.
+
+	float3 DiffuseComponent = lerp(NightSide, DaySide, LightMask);
+
+#if ENVIRONMENTMAPPING == 1
+
+		float3 SpecularLighting = float3( 0.0f, 0.0f, 0.0f );
+
+		// Compute the cubemap stuff
+		float3 worldVertToEyeVector = g_EyePos.xyz - i.worldPos.xyz;
+		float3 reflectVect = normalize(CalcReflectionVectorUnnormalized( i.worldNormal, worldVertToEyeVector ));
+		SpecularLighting = ENV_MAP_SCALE * texCUBE( EnvironmentMapSampler, reflectVect );
+
+		//	Compute Environment Mappping Mask
+		float3 EnvMapMaskTexture = tex2D( EnvMapMaskSampler,  correctedTexCoord).xyz;
+
+		DiffuseComponent += ( SpecularLighting * EnvMapMaskTexture	);
+#endif
+
+    return FinalOutput(float4(DiffuseComponent, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z);
+} //1
+
+// Stuff from VLG and their equivs
+//	projPos				=	i.projPos (xyz)
+//	worldPos_projPosZ	=	i.worldPos (xyz)
+//	flashlightSpacePos	=	float4 flashlightSpacePosition = mul(float4(i.worldPos, 1.0), g_FlashlightWorldToTexture);
+//	worldSpaceNormal	=	i.worldNormal (xyz)
+//	worldVertToEyeVector=	OutgoingLightDirection
+//	color (vertexcolor)	=	none
+//	detailTexCoord		=	none
+//	baseTexCoord		=	i.baseTexCoord (xy)
+//	g_EyePos			=	g_EyePos	(xyz)
+//	g_FogParams			=	g_EyePos	(x)
+//	g_EnvmapContrast_ShadowTweaks	=	g_ShadowTweaks (xyz? uses .y once otherwise "g_ShadowTweaks" TODO : look into this or ignore ( since its flashlight related)
