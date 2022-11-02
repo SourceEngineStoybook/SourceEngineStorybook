@@ -2598,11 +2598,7 @@ bool CAI_BaseNPC::FValidateHintType ( CAI_Hint *pHint )
 Activity CAI_BaseNPC::GetHintActivity( short sHintType, Activity HintsActivity )
 {
 	if ( HintsActivity != ACT_INVALID )
-#ifdef MAPBASE
-		return TranslateActivity( HintsActivity ); // Always translate the activity
-#else
 		return HintsActivity;
-#endif
 
 	return ACT_IDLE;
 }
@@ -6827,7 +6823,11 @@ Activity CAI_BaseNPC::TranslateActivity( Activity idealActivity, Activity *pIdea
 		return baseTranslation;
 
 	if ( idealWeaponActivity != baseTranslation && HaveSequenceForActivity( idealWeaponActivity ) )
+#ifdef MAPBASE
+		return idealWeaponActivity;
+#else
 		return idealActivity;
+#endif
 
 	if ( idealActivity != idealWeaponActivity && HaveSequenceForActivity( idealActivity ) )
 		return idealActivity;
