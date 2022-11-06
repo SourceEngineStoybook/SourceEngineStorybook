@@ -60,6 +60,7 @@ PixelShaderLightInfo cLightInfo[3]              : register(PSREG_LIGHT_INFO_ARRA
 // probably flashlight related
 
 const float4 g_LightPower						: register(c27);
+const float4 g_EnvMapTint						: register(c10);
 
 
 //	Basetexture
@@ -214,10 +215,6 @@ if (FLASHLIGHT)
 
 	NightSide = NightSide - (NightSide * saturate(diffuseLighting));
 
-// WRD :	You CAN use one model. However I advise you to use two models.
-//			The lighting can be kinda small in its fade, so using a second model with a black side,
-//			you can use $additive to have a harder cut for one of the two textures - In Lighting.
-
 	float3 DiffuseComponent = lerp(NightSide, DaySide, LightMask);
 
 #if ENVIRONMENTMAPPING == 1
@@ -229,10 +226,18 @@ if (FLASHLIGHT)
 		float3 reflectVect = normalize(CalcReflectionVectorUnnormalized( i.worldNormal, worldVertToEyeVector ));
 		SpecularLighting = ENV_MAP_SCALE * texCUBE( EnvironmentMapSampler, reflectVect );
 
-		//	Compute Environment Mappping Mask
+		//	Compute BaseAlpha Specularfactor
 		float3 EnvMapMaskTexture = tex2D( EnvMapMaskSampler,  correctedTexCoord).xyz;
+		SpecularLighting *= EnvMapMaskTexture;
+		SpecularLighting *= g_EnvMapTint;
 
-		DiffuseComponent += ( SpecularLighting * EnvMapMaskTexture	);
+		float3 SpecularLightingSquared = SpecularLighting * SpecularLighting;
+		SpecularLighting = lerp( SpecularLighting, SpecularLightingSquared, g_LightPower.y );
+
+		float3 greyScale = dot( SpecularLighting, float3( 0.299f, 0.587f, 0.114f ) );
+		SpecularLighting = lerp( greyScale, SpecularLighting, g_LightPower.z );
+
+		DiffuseComponent += SpecularLighting;
 #endif
 
     return FinalOutput(float4(DiffuseComponent, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z);

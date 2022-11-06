@@ -106,9 +106,7 @@ VS_OUTPUT main(const VS_INPUT v)
 	}
 	else
 	{
-	//	If it doesn't do VertexLighting set the default color values to 1, 1, 1 so it doesn't mess up the results on the Pixelshader
-	//	This is a leftover from VLG++ stuff that I copied over, Originally it multiplies the lighting result over the basetexture,
-	//	however that is inoptimal as when its 0, 0, 0 the result will be black even if you have other lighting. 1, 1, 1 means it will remain the same
+	// if it doesn't do VertexLighting set the default color values to 1, 1, 1 so it doesn't mess up the results on the Pixelshader
 	o.color.xyz = float3(1, 1, 1);
 	}
 

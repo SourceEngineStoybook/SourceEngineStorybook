@@ -145,7 +145,7 @@ SHADER_DRAW
 			SetDefaultBlendingShadowState(info.baseTexture, true);
 		}
 
-		int nShadowFilterMode = bHasFlashlight ? g_pHardwareConfig->GetShadowFilterMode() : 0;
+//		int nShadowFilterMode = bHasFlashlight ? g_pHardwareConfig->GetShadowFilterMode() : 0;
 
 		// Setting up samplers
 		pShaderShadow->EnableTexture(SAMPLER_BASETEXTURE, true);    // Basetexture
@@ -180,8 +180,8 @@ SHADER_DRAW
 
 		// Setting up static pixel shader
 		DECLARE_STATIC_PIXEL_SHADER(atmosphere_ps30);
-		SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHT, bHasFlashlight);
-		SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode);
+		SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHT, 0);
+		SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHTDEPTHFILTERMODE, 0);
 		SET_STATIC_PIXEL_SHADER(atmosphere_ps30);
 
 		// Setting up fog
@@ -259,7 +259,7 @@ SHADER_DRAW
 		// Setting up dynamic vertex shader
 		DECLARE_DYNAMIC_VERTEX_SHADER(atmosphere_vs30);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(DYNAMIC_LIGHT, lightState.HasDynamicLight());
-		SET_DYNAMIC_VERTEX_SHADER_COMBO(STATIC_LIGHT_VERTEX, 1); HackHack - This Lightstate doesn't exist in SP so I just forced it to the default value
+		SET_DYNAMIC_VERTEX_SHADER_COMBO(STATIC_LIGHT_VERTEX, 1); // HackHack - This Lightstate doesn't exist in SP so I just forced it to the default value
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(DOWATERFOG, fogIndex);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(SKINNING, numBones > 0);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(LIGHTING_PREVIEW, pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_ENABLE_FIXED_LIGHTING) != 0);

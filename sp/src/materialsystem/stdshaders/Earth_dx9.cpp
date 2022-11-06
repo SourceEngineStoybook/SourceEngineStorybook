@@ -272,30 +272,9 @@ SHADER_DRAW
 	// This way we just do one check instead of checking for all bools even when there is no texture. Adds an additional check when you have one sadly
 	//==================================================================================================
 	// EnvMap related
-	bool bHasEnvMapTint = false;
-	bool bHasEnvMapContrast = false;
-	bool bHasEnvMapSaturation = false;
 
 	// We use all of these later
-	float Float4EnvMapTintNoEMM[4] = { 1, 1, 1, 0 };
-	float Float4EnvMapContrastSaturation[4] = { 0, 1, 0, 0 };
-
-	if (bHasEnvTexture)
-	{
-//		Msg("bHasEnvTexture = True. \n\n");
-
-		params[info.m_nEnvMapTint]->GetVecValue(Float4EnvMapTintNoEMM, 3); // ->IsDefined() doesn't work so this is required.
-		bHasEnvMapTint = (Float4EnvMapTintNoEMM[0] != 1.000000 || Float4EnvMapTintNoEMM[1] != 1.000000 || Float4EnvMapTintNoEMM[2] != 1.000000); // Questionable, but works
-
-		Float4EnvMapContrastSaturation[0] = params[info.m_nEnvMapContrast]->GetFloatValue();
-		bHasEnvMapContrast = (Float4EnvMapContrastSaturation[0] != 0.00); // lets pray the default value of 0.0 works
-
-		Float4EnvMapContrastSaturation[1] = params[info.m_nEnvMapSaturation]->GetFloatValue();
-		bHasEnvMapSaturation = (Float4EnvMapContrastSaturation[1] != 1.00);
-
-		// If we have no masking at all, simply display the envmap. Look in the shader under Envmapping and you'll understand
-	}
-
+	float Float4EnvMapTintSaturation[4] = { 1, 1, 1, 0 };
 	bool bHasLightPower = (params[info.LightPower]->GetFloatValue() != 0.000);
 
 	// Rest is free
@@ -303,6 +282,21 @@ SHADER_DRAW
 	if (bHasLightPower)
 	{
 		LightPower[0] = params[info.LightPower]->GetFloatValue();
+	}
+
+	if (bHasEnvTexture)
+	{
+		params[info.m_nEnvMapTint]->GetVecValue(Float4EnvMapTintSaturation, 3); // ->IsDefined() doesn't work so this is required.
+		if (params[info.m_nEnvMapSaturation]->GetFloatValue() == 0.00000)
+		{
+			Float4EnvMapTintSaturation[3] = 1.0f;
+		}
+		else
+		{
+			Float4EnvMapTintSaturation[3] = params[info.m_nEnvMapSaturation]->GetFloatValue();
+		}
+		
+		LightPower[2] = params[info.m_nEnvMapContrast]->GetFloatValue();
 	}
 
 	//	int ShaderComboIndex = 0; // required for later checks
@@ -334,7 +328,7 @@ SHADER_DRAW
 			SetDefaultBlendingShadowState(info.BaseTexture, true);
 		}
 
-		int nShadowFilterMode = bHasFlashlight ? g_pHardwareConfig->GetShadowFilterMode() : 0;
+//		int nShadowFilterMode = bHasFlashlight ? g_pHardwareConfig->GetShadowFilterMode() : 0;
 
 		// Setting up samplers. We always set them up because otherwise its a mess checking if statements here
 		pShaderShadow->EnableTexture(SHADER_SAMPLER0, true);
@@ -391,8 +385,8 @@ SHADER_DRAW
 					//Pixel Shader
 					DECLARE_STATIC_PIXEL_SHADER(earth_ps30);
 					// Required for Flashlight renderpass
-					SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHT, bHasFlashlight);
-					SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode);
+					SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHT, 0);
+					SET_STATIC_PIXEL_SHADER_COMBO(FLASHLIGHTDEPTHFILTERMODE, 0);
 					// Put anything else below
 					SET_STATIC_PIXEL_SHADER_COMBO(ENVIRONMENTMAPPING, bHasEnvTexture); // bHasEnvTexture
 					SET_STATIC_PIXEL_SHADER_COMBO(HALFLAMBERT, bHalfLambert);
@@ -582,22 +576,16 @@ SHADER_DRAW
 		// Sending fog info to the pixel shader
 		// c12
 		pShaderAPI->SetPixelShaderFogParams(12);
-
+		
 		// Bind textures for all shader instances of this
 			if (bHasEnvTexture)
 			{
 				BindTexture(SAMPLER_ENVMAP, info.envMap, 0);
 			}
 
-			if (bHasEnvMapTint)
-			{
-				pShaderAPI->SetPixelShaderConstant(32, Float4EnvMapTintNoEMM);
-			}
+			pShaderAPI->SetPixelShaderConstant(10, Float4EnvMapTintSaturation);
+			pShaderAPI->SetPixelShaderConstant(27, LightPower);
 
-			if (bHasEnvMapContrast == true || bHasEnvMapSaturation == true)
-			{
-				pShaderAPI->SetPixelShaderConstant(33, Float4EnvMapContrastSaturation);
-			}
 
 		// More flashlight related stuff
 		// Flashlight is a second renderpass. It uses c2, c13, c14, c28. Which means that they are free otherwise.
@@ -632,8 +620,6 @@ SHADER_DRAW
 			HashShadow2DJitter(flashlightState.m_flShadowJitterSeed, &tweaks[2], &tweaks[3]);
 			pShaderAPI->SetPixelShaderConstant(PSREG_ENVMAP_TINT__SHADOW_TWEAKS, tweaks, 1); // c2 - ONLY USED WITH THE FLASHLIGHT
 		}
-
-		pShaderAPI->SetPixelShaderConstant(27, LightPower, 1);
 
 
 	}	// Important!!! This bracket HAS TO BE above Draw(), I fucked this up before and so will you
