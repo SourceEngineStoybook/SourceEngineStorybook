@@ -647,8 +647,14 @@ void CBasePlayer::CreateHandModel(int index, int iOtherVm)
 {
 	Assert(index >= 0 && index < MAX_VIEWMODELS && iOtherVm >= 0 && iOtherVm < MAX_VIEWMODELS );
 
-	if (GetViewModel(index))
+	if (GetViewModel( index ))
+	{
+		// This can happen if the player respawns
+		// Don't draw unless we're already using a hands weapon
+		if ( !GetActiveWeapon() || !GetActiveWeapon()->UsesHands() )
+			GetViewModel( index )->AddEffects( EF_NODRAW );
 		return;
+	}
 
 	CBaseViewModel *vm = (CBaseViewModel *)CreateEntityByName("hand_viewmodel");
 	if (vm)
@@ -1720,6 +1726,15 @@ void CBasePlayer::RemoveAllItems( bool removeSuit )
 	Weapon_SetLast( NULL );
 	RemoveAllWeapons();
  	RemoveAllAmmo();
+
+#ifdef MAPBASE
+	// Hide hand viewmodel
+	CBaseViewModel *vm = GetViewModel( 1 );
+	if ( vm )
+	{
+		vm->AddEffects( EF_NODRAW );
+	}
+#endif
 
 	if ( removeSuit )
 	{
